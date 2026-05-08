@@ -48,6 +48,27 @@ Usuario administrador inicial:
 
 Tambien puedes registrar usuarios nuevos desde la interfaz.
 
+## Despliegue del backend en Render
+
+El archivo `render.yaml` permite crear el backend como Blueprint en Render:
+
+- `taxis-auth-service`: Web Service Docker para autenticacion.
+- `taxis-taxi-service`: Web Service Docker para taxis.
+- `taxis-trip-service`: Web Service Docker para carreras.
+- `taxis-auth-db`: PostgreSQL administrado para autenticacion.
+- `taxis-trips-db`: PostgreSQL administrado para carreras.
+- `taxis-mysql`: servicio privado Docker con MySQL 8.4 y disco persistente.
+
+Pasos:
+
+1. Entrar a Render.
+2. Crear un nuevo Blueprint.
+3. Seleccionar el repositorio `EmersonAngel/GestionTaxis`.
+4. Revisar los servicios y planes antes de confirmar.
+5. Aplicar el Blueprint.
+
+Importante: Render no ofrece MySQL administrado nativo. El MySQL del Blueprint queda como servicio privado Docker y requiere plan `starter`.
+
 ## Requisitos cubiertos
 
 - API REST con microservicios independientes.

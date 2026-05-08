@@ -8,6 +8,7 @@ RUN mvn -q -DskipTests package
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
+COPY start.sh start.sh
+RUN chmod +x start.sh
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+ENTRYPOINT ["./start.sh"]
