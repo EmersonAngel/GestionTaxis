@@ -53,7 +53,7 @@ export class AppComponent implements OnInit {
   private readonly taxiUrl = `${this.apiBaseUrl}/api/taxis`;
   private readonly tripUrl = `${this.apiBaseUrl}/api/trips`;
 
-  token = localStorage.getItem('token') ?? '';
+  token = this.readStorage('token') ?? '';
   user: User | null = this.readUser();
   activeTab: 'taxis' | 'trips' = 'taxis';
   loading = false;
@@ -109,8 +109,8 @@ export class AppComponent implements OnInit {
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    this.removeStorage('token');
+    this.removeStorage('user');
     this.token = '';
     this.user = null;
     this.taxis = [];
@@ -266,8 +266,8 @@ export class AppComponent implements OnInit {
         this.loading = false;
         this.token = response.token;
         this.user = response.user;
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        this.writeStorage('token', response.token);
+        this.writeStorage('user', JSON.stringify(response.user));
         this.success(`Sesion iniciada como ${response.user.role}`);
         this.loadData();
       },
@@ -304,8 +304,18 @@ export class AppComponent implements OnInit {
   }
 
   private readUser(): User | null {
-    const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) as User : null;
+    const raw = this.readStorage('user');
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw) as User;
+    } catch {
+      this.removeStorage('user');
+      this.removeStorage('token');
+      return null;
+    }
   }
 
   private emptyTaxiForm() {
@@ -331,7 +341,7 @@ export class AppComponent implements OnInit {
   }
 
   private resolveApiBaseUrl(): string {
-    const savedUrl = localStorage.getItem('apiBaseUrl');
+    const savedUrl = this.readStorage('apiBaseUrl');
     if (savedUrl?.trim()) {
       return savedUrl.trim().replace(/\/$/, '');
     }
@@ -342,5 +352,29 @@ export class AppComponent implements OnInit {
     }
 
     return 'https://taxis-api-gateway.onrender.com';
+  }
+
+  private readStorage(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeStorage(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // The app still works for the current session if storage is unavailable.
+    }
+  }
+
+  private removeStorage(key: string): void {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignore storage cleanup errors in restricted browser contexts.
+    }
   }
 }
