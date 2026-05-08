@@ -1,0 +1,194 @@
+<main class="shell">
+  <section class="brand-strip">
+    <div class="brand-mark">
+      <span>GT</span>
+    </div>
+    <div>
+      <p class="eyebrow">Gestion de Taxis</p>
+      <h1>Panel operativo de flota y carreras</h1>
+    </div>
+  </section>
+
+  <section *ngIf="!token" class="auth-grid">
+    <form class="panel" (ngSubmit)="login()">
+      <div class="panel-head">
+        <span class="step">01</span>
+        <h2>Login</h2>
+      </div>
+
+      <label>
+        Correo
+        <input name="loginEmail" type="email" [(ngModel)]="loginForm.email" required>
+      </label>
+
+      <label>
+        Password
+        <input name="loginPassword" type="password" [(ngModel)]="loginForm.password" required>
+      </label>
+
+      <button class="primary" type="submit" [disabled]="loading">Ingresar</button>
+    </form>
+
+    <form class="panel accent" (ngSubmit)="register()">
+      <div class="panel-head">
+        <span class="step green">02</span>
+        <h2>Registro</h2>
+      </div>
+
+      <label>
+        Nombre
+        <input name="name" [(ngModel)]="registerForm.name" required>
+      </label>
+
+      <label>
+        Correo
+        <input name="email" type="email" [(ngModel)]="registerForm.email" required>
+      </label>
+
+      <label>
+        Password
+        <input name="password" type="password" [(ngModel)]="registerForm.password" minlength="6" required>
+      </label>
+
+      <label>
+        Rol
+        <select name="role" [(ngModel)]="registerForm.role">
+          <option value="USER">USER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </label>
+
+      <button class="primary green-button" type="submit" [disabled]="loading">Crear cuenta</button>
+    </form>
+  </section>
+
+  <section *ngIf="token" class="dashboard">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Sesion activa</p>
+        <h2>{{ user?.name }}</h2>
+        <span class="role-pill">{{ user?.role }}</span>
+      </div>
+      <button class="ghost" type="button" (click)="logout()">Salir</button>
+    </header>
+
+    <div class="metrics">
+      <article>
+        <span class="metric-label">Taxis</span>
+        <strong>{{ taxis.length }}</strong>
+      </article>
+      <article>
+        <span class="metric-label">Carreras</span>
+        <strong>{{ trips.length }}</strong>
+      </article>
+      <article>
+        <span class="metric-label">Disponibles</span>
+        <strong>{{ availableTaxis }}</strong>
+      </article>
+    </div>
+
+    <div class="toolbar">
+      <div class="tabs">
+        <button type="button" [class.active]="activeTab === 'taxis'" (click)="activeTab = 'taxis'">Taxis</button>
+        <button type="button" [class.active]="activeTab === 'trips'" (click)="activeTab = 'trips'">Carreras</button>
+      </div>
+      <label class="search">
+        Buscar
+        <input name="search" [(ngModel)]="search" (keyup.enter)="loadData()">
+      </label>
+      <button class="secondary" type="button" (click)="loadData()">Actualizar</button>
+    </div>
+
+    <section *ngIf="activeTab === 'taxis'" class="work-grid">
+      <form *ngIf="isAdmin" class="panel form-panel" (ngSubmit)="saveTaxi()">
+        <div class="panel-head">
+          <span class="step">03</span>
+          <h2>{{ editingTaxiId ? 'Editar taxi' : 'Nuevo taxi' }}</h2>
+        </div>
+
+        <label>Placa<input name="plate" [(ngModel)]="taxiForm.plate" required></label>
+        <label>Conductor<input name="driverName" [(ngModel)]="taxiForm.driverName" required></label>
+        <label>Modelo<input name="vehicleModel" [(ngModel)]="taxiForm.vehicleModel" required></label>
+        <label>Capacidad<input name="capacity" type="number" min="1" [(ngModel)]="taxiForm.capacity" required></label>
+        <label>Tarifa base<input name="baseFare" type="number" min="0" [(ngModel)]="taxiForm.baseFare" required></label>
+        <label>
+          Estado
+          <select name="taxiStatus" [(ngModel)]="taxiForm.status">
+            <option *ngFor="let status of taxiStatuses" [value]="status">{{ statusText(status) }}</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button class="primary" type="submit">{{ editingTaxiId ? 'Guardar' : 'Crear' }}</button>
+          <button *ngIf="editingTaxiId" class="ghost" type="button" (click)="cancelTaxiEdit()">Cancelar</button>
+        </div>
+      </form>
+
+      <div class="list-panel">
+        <article *ngFor="let taxi of taxis" class="data-card">
+          <div>
+            <div class="card-title">{{ taxi.plate }}</div>
+            <p>{{ taxi.driverName }} · {{ taxi.vehicleModel }}</p>
+          </div>
+          <span class="status" [ngClass]="statusClass(taxi.status)">{{ statusText(taxi.status) }}</span>
+          <dl>
+            <div><dt>Capacidad</dt><dd>{{ taxi.capacity }}</dd></div>
+            <div><dt>Tarifa</dt><dd>{{ money(taxi.baseFare) }}</dd></div>
+          </dl>
+          <div *ngIf="isAdmin" class="card-actions">
+            <button class="secondary" type="button" (click)="editTaxi(taxi)">Editar</button>
+            <button class="danger" type="button" (click)="deleteTaxi(taxi.id)">Eliminar</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section *ngIf="activeTab === 'trips'" class="work-grid">
+      <form class="panel form-panel" (ngSubmit)="saveTrip()">
+        <div class="panel-head">
+          <span class="step orange">04</span>
+          <h2>{{ editingTripId ? 'Editar carrera' : 'Nueva carrera' }}</h2>
+        </div>
+
+        <label>Pasajero<input name="passengerName" [(ngModel)]="tripForm.passengerName" required></label>
+        <label>Origen<input name="pickupAddress" [(ngModel)]="tripForm.pickupAddress" required></label>
+        <label>Destino<input name="destinationAddress" [(ngModel)]="tripForm.destinationAddress" required></label>
+        <label>Taxi<input name="taxiPlate" [(ngModel)]="tripForm.taxiPlate" required></label>
+        <label>Valor<input name="fare" type="number" min="0" [(ngModel)]="tripForm.fare" required></label>
+        <label>
+          Estado
+          <select name="tripStatus" [(ngModel)]="tripForm.status">
+            <option *ngFor="let status of tripStatuses" [value]="status">{{ statusText(status) }}</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button class="primary orange-button" type="submit">{{ editingTripId ? 'Guardar' : 'Crear' }}</button>
+          <button *ngIf="editingTripId" class="ghost" type="button" (click)="cancelTripEdit()">Cancelar</button>
+        </div>
+      </form>
+
+      <div class="list-panel">
+        <article *ngFor="let trip of trips" class="data-card">
+          <div>
+            <div class="card-title">{{ trip.passengerName }}</div>
+            <p>{{ trip.pickupAddress }} -> {{ trip.destinationAddress }}</p>
+          </div>
+          <span class="status" [ngClass]="statusClass(trip.status)">{{ statusText(trip.status) }}</span>
+          <dl>
+            <div><dt>Taxi</dt><dd>{{ trip.taxiPlate }}</dd></div>
+            <div><dt>Valor</dt><dd>{{ money(trip.fare) }}</dd></div>
+            <div><dt>Usuario</dt><dd>{{ trip.requestedBy }}</dd></div>
+          </dl>
+          <div class="card-actions">
+            <button class="secondary" type="button" (click)="editTrip(trip)">Editar</button>
+            <button *ngIf="isAdmin" class="danger" type="button" (click)="deleteTrip(trip.id)">Eliminar</button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </section>
+
+  <p *ngIf="message" class="toast ok">{{ message }}</p>
+  <p *ngIf="error" class="toast bad">{{ error }}</p>
+</main>
