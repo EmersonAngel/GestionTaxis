@@ -4,9 +4,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.Collections;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.ResponseErrorHandler;
@@ -14,20 +17,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import java.time.Duration;
 
 @RestController
 public class ProxyController {
 
-  private final RestTemplate restTemplate = new RestTemplate();
+  private final RestTemplate restTemplate;
   private final String authUrl;
   private final String taxiUrl;
   private final String tripUrl;
 
   public ProxyController(
+      RestTemplateBuilder restTemplateBuilder,
       @Value("${app.services.auth-url}") String authUrl,
       @Value("${app.services.taxi-url}") String taxiUrl,
       @Value("${app.services.trip-url}") String tripUrl
   ) {
+    this.restTemplate = restTemplateBuilder
+        .setConnectTimeout(Duration.ofSeconds(10))
+        .setReadTimeout(Duration.ofSeconds(30))
+        .build();
     this.authUrl = normalize(authUrl);
     this.taxiUrl = normalize(taxiUrl);
     this.tripUrl = normalize(tripUrl);
@@ -75,7 +84,16 @@ public class ProxyController {
     byte[] body = StreamUtils.copyToByteArray(request.getInputStream());
     HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
 
-    return restTemplate.exchange(uri, HttpMethod.valueOf(request.getMethod()), entity, byte[].class);
+    try {
+      return restTemplate.exchange(uri, HttpMethod.valueOf(request.getMethod()), entity, byte[].class);
+    } catch (RuntimeException ex) {
+      String message = "{\"message\":\"Servicio no disponible desde el API Gateway\",\"detail\":\""
+          + ex.getClass().getSimpleName()
+          + "\"}";
+      return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(message.getBytes());
+    }
   }
 
   private String normalize(String url) {
