@@ -120,6 +120,35 @@ Rutas por el Gateway:
 
 Importante: Render Free Postgres expira a los 30 dias y solo permite una base Free activa por workspace. Para una entrega academica funciona, pero no debe usarse como produccion.
 
+## Despliegue gratuito del frontend
+
+El frontend queda preparado como Static Site Free en Render dentro del mismo `render.yaml`:
+
+- Servicio: `taxis-frontend`
+- Build command: `cd frontend && npm install && npm run build`
+- Publish directory: `./frontend/dist/gestion-taxis-frontend/browser`
+- Rewrite SPA: `/* -> /index.html`
+
+La aplicacion Angular consume el backend mediante el API Gateway:
+
+```text
+https://taxis-api-gateway.onrender.com
+```
+
+En local usa automaticamente:
+
+```text
+http://localhost:8080
+```
+
+Si Render genera otra URL para el gateway, puedes abrir la consola del navegador y guardar una URL distinta:
+
+```js
+localStorage.setItem('apiBaseUrl', 'https://URL-REAL-DEL-GATEWAY.onrender.com')
+```
+
+Luego recarga la pagina.
+
 ## Requisitos cubiertos
 
 - API REST con microservicios independientes.

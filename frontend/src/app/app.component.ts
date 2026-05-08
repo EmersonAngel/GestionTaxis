@@ -48,9 +48,10 @@ interface Trip {
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  private readonly authUrl = 'http://localhost:8081/api/auth';
-  private readonly taxiUrl = 'http://localhost:8082/api/taxis';
-  private readonly tripUrl = 'http://localhost:8083/api/trips';
+  readonly apiBaseUrl = this.resolveApiBaseUrl();
+  private readonly authUrl = `${this.apiBaseUrl}/api/auth`;
+  private readonly taxiUrl = `${this.apiBaseUrl}/api/taxis`;
+  private readonly tripUrl = `${this.apiBaseUrl}/api/trips`;
 
   token = localStorage.getItem('token') ?? '';
   user: User | null = this.readUser();
@@ -327,5 +328,19 @@ export class AppComponent implements OnInit {
       fare: 15000,
       status: 'REQUESTED' as TripStatus
     };
+  }
+
+  private resolveApiBaseUrl(): string {
+    const savedUrl = localStorage.getItem('apiBaseUrl');
+    if (savedUrl?.trim()) {
+      return savedUrl.trim().replace(/\/$/, '');
+    }
+
+    const localHosts = ['localhost', '127.0.0.1', '0.0.0.0'];
+    if (localHosts.includes(window.location.hostname)) {
+      return 'http://localhost:8080';
+    }
+
+    return 'https://taxis-api-gateway.onrender.com';
   }
 }

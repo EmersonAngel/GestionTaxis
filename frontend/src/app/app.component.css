@@ -194,7 +194,7 @@ button {
 .metrics {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .metrics article {
@@ -212,6 +212,20 @@ button {
 .metrics strong {
   color: #74d7ff;
   font-size: 2.1rem;
+}
+
+.fintech-reference {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.fintech-reference img {
+  background: #ffffff;
+  border-radius: 8px;
+  height: 48px;
+  object-fit: cover;
+  width: 48px;
 }
 
 .tabs {
@@ -370,4 +384,3 @@ dd {
     grid-template-columns: 1fr;
   }
 }
-
