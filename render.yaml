@@ -39,20 +39,11 @@ services:
       - key: PORT
         value: "10000"
       - key: AUTH_SERVICE_URL
-        fromService:
-          type: web
-          name: taxis-auth-service
-          property: host
+        value: https://taxis-auth-service.onrender.com
       - key: TAXI_SERVICE_URL
-        fromService:
-          type: web
-          name: taxis-taxi-service
-          property: host
+        value: https://taxis-taxi-service.onrender.com
       - key: TRIP_SERVICE_URL
-        fromService:
-          type: web
-          name: taxis-trip-service
-          property: host
+        value: https://taxis-trip-service.onrender.com
 
   - type: web
     name: taxis-auth-service
