@@ -1,41 +1,48 @@
-# Render Blueprint para desplegar el backend de Gestion de Taxis.
-# Nota: Render ofrece PostgreSQL administrado, pero no MySQL administrado.
-# Por eso MySQL se define como un servicio privado Docker con disco persistente.
-# Ese servicio privado usa plan "starter" porque Render no permite plan free para private services.
+# Render Blueprint gratuito para el backend de Gestion de Taxis.
+#
+# Recursos gratis usados:
+# - 4 Web Services Free en Render: API Gateway + 3 microservicios.
+# - 1 Render PostgreSQL Free para auth-service y trip-service.
+# - MySQL externo en Aiven Free Tier para taxi-service.
+#
+# Importante:
+# Render no ofrece MySQL administrado gratuito. Para cumplir MySQL + PostgreSQL
+# sin pagar, crea MySQL en Aiven Free y pega sus credenciales cuando Render
+# pida las variables MYSQL_* marcadas con sync: false.
 
 databases:
-  - name: taxis-auth-db
+  - name: taxis-postgres-db
     plan: free
-    databaseName: taxi_auth
-    user: taxi_auth_user
-    postgresMajorVersion: "16"
-
-  - name: taxis-trips-db
-    plan: free
-    databaseName: taxi_trips
-    user: taxi_trips_user
+    databaseName: taxis_postgres
+    user: taxis_user
     postgresMajorVersion: "16"
 
 services:
-  - type: pserv
-    name: taxis-mysql
-    runtime: image
-    plan: starter
-    image:
-      url: docker.io/library/mysql:8.4
-    disk:
-      name: mysql-data
-      mountPath: /var/lib/mysql
-      sizeGB: 1
+  - type: web
+    name: taxis-api-gateway
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/api-gateway/Dockerfile
+    dockerContext: ./backend/api-gateway
+    healthCheckPath: /health
     envVars:
-      - key: MYSQL_ROOT_PASSWORD
-        value: root
-      - key: MYSQL_DATABASE
-        value: taxi_fleet
-      - key: MYSQL_USER
-        value: taxi
-      - key: MYSQL_PASSWORD
-        value: taxi
+      - key: PORT
+        value: "10000"
+      - key: AUTH_SERVICE_URL
+        fromService:
+          type: web
+          name: taxis-auth-service
+          property: host
+      - key: TAXI_SERVICE_URL
+        fromService:
+          type: web
+          name: taxis-taxi-service
+          property: host
+      - key: TRIP_SERVICE_URL
+        fromService:
+          type: web
+          name: taxis-trip-service
+          property: host
 
   - type: web
     name: taxis-auth-service
@@ -49,15 +56,15 @@ services:
         value: "10000"
       - key: DATABASE_URL
         fromDatabase:
-          name: taxis-auth-db
+          name: taxis-postgres-db
           property: connectionString
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
-          name: taxis-auth-db
+          name: taxis-postgres-db
           property: user
       - key: SPRING_DATASOURCE_PASSWORD
         fromDatabase:
-          name: taxis-auth-db
+          name: taxis-postgres-db
           property: password
       - key: JWT_SECRET
         value: 6b2b8e0ce8d1400d8a03a6e2a1df6c8dbda7e37868529e7f4f9d60b3d5adf987
@@ -73,18 +80,17 @@ services:
       - key: PORT
         value: "10000"
       - key: MYSQL_HOST
-        fromService:
-          type: pserv
-          name: taxis-mysql
-          property: host
+        sync: false
       - key: MYSQL_PORT
-        value: "3306"
+        sync: false
       - key: MYSQL_DATABASE
-        value: taxi_fleet
+        sync: false
       - key: MYSQL_USER
-        value: taxi
+        sync: false
       - key: MYSQL_PASSWORD
-        value: taxi
+        sync: false
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: JWT_SECRET
         value: 6b2b8e0ce8d1400d8a03a6e2a1df6c8dbda7e37868529e7f4f9d60b3d5adf987
 
@@ -100,16 +106,15 @@ services:
         value: "10000"
       - key: DATABASE_URL
         fromDatabase:
-          name: taxis-trips-db
+          name: taxis-postgres-db
           property: connectionString
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
-          name: taxis-trips-db
+          name: taxis-postgres-db
           property: user
       - key: SPRING_DATASOURCE_PASSWORD
         fromDatabase:
-          name: taxis-trips-db
+          name: taxis-postgres-db
           property: password
       - key: JWT_SECRET
         value: 6b2b8e0ce8d1400d8a03a6e2a1df6c8dbda7e37868529e7f4f9d60b3d5adf987
-

@@ -11,8 +11,8 @@
 
   <modules>
     <module>backend/auth-service</module>
+    <module>backend/api-gateway</module>
     <module>backend/taxi-service</module>
     <module>backend/trip-service</module>
   </modules>
 </project>
-

@@ -50,6 +50,21 @@ services:
       postgres:
         condition: service_healthy
 
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: taxis-api-gateway
+    environment:
+      SERVER_PORT: 8080
+      AUTH_SERVICE_URL: http://auth-service:8081
+      TAXI_SERVICE_URL: http://taxi-service:8082
+      TRIP_SERVICE_URL: http://trip-service:8083
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - taxi-service
+      - trip-service
+
   taxi-service:
     build: ./backend/taxi-service
     container_name: taxis-taxi-service

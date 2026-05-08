@@ -4,6 +4,7 @@ Aplicacion de microservicios con autenticacion JWT, roles `ADMIN` y `USER`, dos 
 
 ## Servicios
 
+- `api-gateway` (`8080`): punto unico de entrada para el backend.
 - `auth-service` (`8081`): registro, login y perfil con JWT. Usa PostgreSQL.
 - `taxi-service` (`8082`): CRUD de taxis. Usa MySQL.
 - `trip-service` (`8083`): CRUD de carreras/viajes. Usa PostgreSQL.
@@ -17,6 +18,7 @@ Los microservicios backend tambien estan declarados como modulos Maven:
 gestion-taxis
 └── backend
     ├── auth-service
+    ├── api-gateway
     ├── taxi-service
     └── trip-service
 ```
@@ -48,26 +50,75 @@ Usuario administrador inicial:
 
 Tambien puedes registrar usuarios nuevos desde la interfaz.
 
-## Despliegue del backend en Render
+## Despliegue gratuito del backend
 
-El archivo `render.yaml` permite crear el backend como Blueprint en Render:
+El archivo `render.yaml` permite crear el backend como Blueprint gratuito:
 
-- `taxis-auth-service`: Web Service Docker para autenticacion.
-- `taxis-taxi-service`: Web Service Docker para taxis.
-- `taxis-trip-service`: Web Service Docker para carreras.
-- `taxis-auth-db`: PostgreSQL administrado para autenticacion.
-- `taxis-trips-db`: PostgreSQL administrado para carreras.
-- `taxis-mysql`: servicio privado Docker con MySQL 8.4 y disco persistente.
+- `taxis-api-gateway`: Web Service Free en Render.
+- `taxis-auth-service`: Web Service Free en Render.
+- `taxis-taxi-service`: Web Service Free en Render.
+- `taxis-trip-service`: Web Service Free en Render.
+- `taxis-postgres-db`: PostgreSQL Free en Render.
+- MySQL externo gratuito en Aiven Free Tier.
+
+### MySQL gratis recomendado
+
+Render no ofrece MySQL administrado gratuito. La opcion gratuita recomendada es Aiven for MySQL Free Tier:
+
+- Gratis sin tarjeta.
+- 1 GB de almacenamiento.
+- Sin limite de 30 dias.
+- MySQL administrado.
+
+Pasos para crear MySQL:
+
+1. Crear cuenta en Aiven.
+2. Crear servicio `MySQL`.
+3. Elegir plan `Free`.
+4. Copiar los datos de conexion:
+   - host
+   - port
+   - database
+   - user
+   - password
+
+Cuando Render cree el Blueprint, pedira estas variables del `taxi-service`:
+
+```text
+MYSQL_HOST
+MYSQL_PORT
+MYSQL_DATABASE
+MYSQL_USER
+MYSQL_PASSWORD
+```
+
+Para Aiven, `MYSQL_SSL_MODE` ya queda configurado como `REQUIRED`.
 
 Pasos:
 
 1. Entrar a Render.
 2. Crear un nuevo Blueprint.
 3. Seleccionar el repositorio `EmersonAngel/GestionTaxis`.
-4. Revisar los servicios y planes antes de confirmar.
-5. Aplicar el Blueprint.
+4. Completar las variables `MYSQL_*` con los datos de Aiven.
+5. Revisar que todos los Web Services esten en plan `Free`.
+6. Aplicar el Blueprint.
 
-Importante: Render no ofrece MySQL administrado nativo. El MySQL del Blueprint queda como servicio privado Docker y requiere plan `starter`.
+Endpoint principal del backend:
+
+```text
+https://taxis-api-gateway.onrender.com
+```
+
+Rutas por el Gateway:
+
+```text
+/api/auth/**
+/api/taxis/**
+/api/trips/**
+/health
+```
+
+Importante: Render Free Postgres expira a los 30 dias y solo permite una base Free activa por workspace. Para una entrega academica funciona, pero no debe usarse como produccion.
 
 ## Requisitos cubiertos
 
